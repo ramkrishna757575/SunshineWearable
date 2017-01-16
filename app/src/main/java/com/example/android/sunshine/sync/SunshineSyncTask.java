@@ -18,8 +18,11 @@ package com.example.android.sunshine.sync;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.text.format.DateUtils;
 
+import com.example.android.sunshine.R;
 import com.example.android.sunshine.data.SunshinePreferences;
 import com.example.android.sunshine.data.WeatherContract;
 import com.example.android.sunshine.utilities.NetworkUtils;
@@ -107,6 +110,8 @@ public class SunshineSyncTask {
             /* If the code reaches this point, we have successfully performed our sync */
 
             }
+            Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(),R.drawable.ic_clear);
+            new SunshineWearSyncUtils(context, "20d 10d", bitmap);
 
         } catch (Exception e) {
             /* Server probably invalid */
