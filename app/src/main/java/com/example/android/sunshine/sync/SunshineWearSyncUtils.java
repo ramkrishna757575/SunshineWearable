@@ -24,6 +24,7 @@ import java.io.ByteArrayOutputStream;
 
 public class SunshineWearSyncUtils implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
+    private static int i = 0;
     private static final String TAG = SunshineWearSyncUtils.class.getName();
     private GoogleApiClient mGoogleApiClient;
     private Context mContext;
@@ -64,7 +65,7 @@ public class SunshineWearSyncUtils implements GoogleApiClient.ConnectionCallback
 
     private void sendDataToWearable() {
         PutDataMapRequest dataMapRequest = PutDataMapRequest.create(WEARABLE_DATA_PATH);
-        dataMapRequest.getDataMap().putString("temperatures", temperatures);
+        dataMapRequest.getDataMap().putString("temperatures", Integer.toString(i++));
 
         Asset asset = createAssetFromBitmap(weatherBitmap);
         dataMapRequest.getDataMap().putAsset("bmpicon", asset);
