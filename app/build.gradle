@@ -6,11 +6,12 @@ android {
 
     defaultConfig {
         applicationId "com.example.android.sunshine"
-        minSdkVersion 10
+        minSdkVersion 21
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -31,7 +32,7 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.0-beta3'
 
     compile 'com.firebase:firebase-jobdispatcher:0.5.0'
-
+    compile 'com.google.android.gms:play-services:9.0.2'
     // Instrumentation dependencies use androidTestCompile
     // (as opposed to testCompile for local unit tests run in the JVM)
     androidTestCompile 'junit:junit:4.12'
