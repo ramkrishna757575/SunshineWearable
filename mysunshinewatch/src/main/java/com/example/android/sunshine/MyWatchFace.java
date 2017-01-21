@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.wear.ramkrishna.watch;
+package com.example.android.sunshine;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -64,6 +64,11 @@ import java.util.concurrent.TimeUnit;
  * low-bit ambient mode, the text is drawn without anti-aliasing in ambient mode.
  */
 public class MyWatchFace extends CanvasWatchFaceService {
+
+    private String tempHigh = "25\u00B0";
+    private String tempLow = "25\u00B0";
+    private Bitmap weatherIcon;
+
     private static final Typeface NORMAL_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
 
@@ -113,8 +118,6 @@ public class MyWatchFace extends CanvasWatchFaceService {
             GoogleApiClient.OnConnectionFailedListener {
 
         private GoogleApiClient mGoogleApiClient;
-        private String temperatures;
-        private Bitmap weatherIcon;
 
         final Handler mUpdateTimeHandler = new EngineHandler(this);
         boolean mRegisteredTimeZoneReceiver = false;
@@ -156,7 +159,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
                     .addApi(Wearable.API)
                     .build();
 
-            mYOffset = resources.getDimension(R.dimen.digital_y_offset);
+            mYOffset = resources.getDimension(R.dimen.digital_y_offset) - 30;
 
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(getColor(R.color.background));
@@ -166,6 +169,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mTextPaintSecondaryAmbient = createTextPaint(getColor(R.color.digital_text));
 
             mCalendar = Calendar.getInstance();
+
+            weatherIcon = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getBaseContext().getResources(),R.drawable.ic_clear), 100, 100, false);
         }
 
         @Override
@@ -285,19 +290,35 @@ public class MyWatchFace extends CanvasWatchFaceService {
             String text;
             SimpleDateFormat format = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.US);
             String calendarDays = format.format(mCalendar.getTime());
+
             Rect timerBounds = new Rect();
             String sampleTime = "10:10:10";
             mTextPaint.getTextBounds(sampleTime, 0, sampleTime.length(), timerBounds);
+
             Rect calenderBounds = new Rect();
             String sampleDate = "Sun, Feb 08 2016";
             mTextPaintSecondary.getTextBounds(sampleDate, 0, sampleDate.length(), calenderBounds);
+
+            String sampleHighTemp = "15°";
+            Rect highTempBounds = new Rect();
+            mTextPaint.getTextBounds(sampleHighTemp, 0, sampleHighTemp.length(), highTempBounds);
+
+            String sampleLowTemp = "10°";
+            Rect lowTempBounds = new Rect();
+            mTextPaintSecondary.getTextBounds(sampleLowTemp, 0, sampleLowTemp.length(), lowTempBounds);
+
             if(mAmbient){
                 text = String.format(Locale.US, "%02d:%02d", mCalendar.get(Calendar.HOUR), mCalendar.get(Calendar.MINUTE));
                 canvas.drawText(calendarDays, bounds.width()/2 - calenderBounds.width()/2, mYOffset + timerBounds.height(), mTextPaintSecondaryAmbient);
+                canvas.drawText(tempHigh, bounds.width()/2 - highTempBounds.width()/2 + 20, mYOffset + (timerBounds.height() + calenderBounds.height() + 90), mTextPaint);
+                canvas.drawText(tempLow, bounds.width()/2 + highTempBounds.width()/2 + 25, mYOffset + (timerBounds.height() + calenderBounds.height() + 90), mTextPaintSecondaryAmbient);
             }else{
                 text = String.format(Locale.US, "%02d:%02d:%02d", mCalendar.get(Calendar.HOUR), mCalendar.get(Calendar.MINUTE), mCalendar.get(Calendar.SECOND));
                 canvas.drawText(calendarDays, bounds.width()/2 - calenderBounds.width()/2, mYOffset + timerBounds.height(), mTextPaintSecondary);
                 canvas.drawLine(bounds.width()/2 - 50, mYOffset + (timerBounds.height() + calenderBounds.height()), bounds.width()/2 + 50, mYOffset + (timerBounds.height() + calenderBounds.height()), mTextPaintSecondary);
+                canvas.drawText(tempHigh, bounds.width()/2 - highTempBounds.width()/2 + 20, mYOffset + (timerBounds.height() + calenderBounds.height() + 90), mTextPaint);
+                canvas.drawText(tempLow, bounds.width()/2 + highTempBounds.width()/2 + 25, mYOffset + (timerBounds.height() + calenderBounds.height() + 90), mTextPaintSecondary);
+                canvas.drawBitmap(weatherIcon, bounds.width()/2 - highTempBounds.width()/2 - 90, mYOffset + (timerBounds.height() + calenderBounds.height()), mTextPaint);
             }
             canvas.drawText(text, bounds.width()/2 - timerBounds.width()/2, mYOffset, mTextPaint);
         }
@@ -360,9 +381,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
                     if (dataItem.getUri().getPath().equals(PATH)) {
                         DataMapItem dataMapItem = DataMapItem.fromDataItem(dataItem);
                         DataMap config = dataMapItem.getDataMap();
-
-                        temperatures = config.getString("temperatures");
-
+                        tempHigh = config.getString("temphigh");
+                        tempLow = config.getString("templow");
                         Asset asset=config.getAsset("bmpicon");
                         loadBitmapFromAsset(asset);
                     }
@@ -370,6 +390,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
             }
         }
 
+        //Function to decode asset into bitmap
         private void loadBitmapFromAsset(Asset asset) {
             if (asset == null) {
                 throw new IllegalArgumentException("Asset must be non-null");
@@ -381,12 +402,11 @@ public class MyWatchFace extends CanvasWatchFaceService {
                         public void onResult(DataApi.GetFdForAssetResult getFdForAssetResult) {
                             InputStream assetInputStream = getFdForAssetResult.getInputStream();
                             if (assetInputStream == null) {
-                                Log.w("Engine", "Requested an unknown Asset.");
-                                weatherIcon = null;
+                                weatherIcon = BitmapFactory.decodeResource(getBaseContext().getResources(),R.drawable.ic_clear);
                             }
                             // decode the stream into a bitmap
                             Bitmap bitmap = BitmapFactory.decodeStream(assetInputStream);
-                            weatherIcon = Bitmap.createScaledBitmap(bitmap, 50, 50, false);
+                            weatherIcon = Bitmap.createScaledBitmap(bitmap, 100, 100, false);
                         }
                     });
         }

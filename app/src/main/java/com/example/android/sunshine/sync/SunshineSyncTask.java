@@ -19,15 +19,17 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.text.format.DateUtils;
+import android.util.DisplayMetrics;
 
-import com.example.android.sunshine.R;
 import com.example.android.sunshine.data.SunshinePreferences;
 import com.example.android.sunshine.data.WeatherContract;
 import com.example.android.sunshine.utilities.NetworkUtils;
 import com.example.android.sunshine.utilities.NotificationUtils;
 import com.example.android.sunshine.utilities.OpenWeatherJsonUtils;
+import com.example.android.sunshine.utilities.SunshineWeatherUtils;
 
 import java.net.URL;
 
@@ -108,10 +110,14 @@ public class SunshineSyncTask {
                 }
 
             /* If the code reaches this point, we have successfully performed our sync */
-
+                int wid = weatherValues[0].getAsInteger(WeatherContract.WeatherEntry.COLUMN_WEATHER_ID);
+                int weatherId = SunshineWeatherUtils.getSmallArtResourceIdForWeatherCondition(wid);
+                Drawable drawable = context.getResources().getDrawableForDensity(weatherId, DisplayMetrics.DENSITY_XXHIGH, context.getTheme());
+                Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+                String high = Long.toString(Math.round(weatherValues[0].getAsLong(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP))) + "°";
+                String low = Long.toString(Math.round(weatherValues[0].getAsLong(WeatherContract.WeatherEntry.COLUMN_MIN_TEMP))) + "°";
+                new SunshineWearSyncUtils(context, high, low, bitmap);
             }
-            Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(),R.drawable.ic_clear);
-            new SunshineWearSyncUtils(context, "20d 10d", bitmap);
 
         } catch (Exception e) {
             /* Server probably invalid */
